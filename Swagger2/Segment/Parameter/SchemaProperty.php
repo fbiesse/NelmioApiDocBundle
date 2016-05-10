@@ -31,4 +31,23 @@ class SchemaProperty extends AbstractParameter
         unset($output["required"]);
         return $output;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getSchema()
+    {
+        return $this->schema;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isCollection()
+    {
+        return $this->isCollection;
+    }
+
+
+
 }

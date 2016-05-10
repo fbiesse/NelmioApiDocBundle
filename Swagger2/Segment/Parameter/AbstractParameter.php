@@ -152,5 +152,15 @@ abstract class AbstractParameter implements SegmentInterface
     {
         $this->multipleOf = $multipleOf;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+
 }
 

@@ -25,7 +25,7 @@ use Symfony\Component\Filesystem\Filesystem;
  *
  * @author Bez Hermoso <bez@activelamp.com>
  */
-class SwaggerDumpCommand extends ContainerAwareCommand
+class Swagger2DumpCommand extends ContainerAwareCommand
 {
     /**
      * @var Filesystem
@@ -33,7 +33,7 @@ class SwaggerDumpCommand extends ContainerAwareCommand
     protected $filesystem;
 
     /**
-     * @var SwaggerFormatter
+     * @var Swagger2Formatter
      */
     protected $formatter;
 
@@ -47,7 +47,7 @@ class SwaggerDumpCommand extends ContainerAwareCommand
             ->addOption('list-only', 'l', InputOption::VALUE_NONE, 'Dump resource list only.')
             ->addOption('pretty', 'p', InputOption::VALUE_NONE, 'Dump as prettified JSON.')
             ->addArgument('destination', InputArgument::OPTIONAL, 'Directory to dump JSON files in.', null)
-            ->setName('api:swagger:dump');
+            ->setName('api:swagger2:dump');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -55,7 +55,7 @@ class SwaggerDumpCommand extends ContainerAwareCommand
         $container = $this->getContainer();
 
         $extractor = $container->get('nelmio_api_doc.extractor.api_doc_extractor');
-        $this->formatter = $container->get('nelmio_api_doc.formatter.swagger_formatter');
+        $this->formatter = $container->get('nelmio_api_doc.formatter.swagger2_formatter');
 
         if ($input->getOption('list-only') && $input->getOption('resource')) {
             throw new \RuntimeException('Cannot selectively dump a resource with the --list-only flag.');
@@ -71,7 +71,7 @@ class SwaggerDumpCommand extends ContainerAwareCommand
 
         if (false != ($resource = $input->getOption('resource'))) {
             $data = $this->getApiDeclaration($apiDocs, $resource, $output);
-            if (count($data['apis']) === 0) {
+            if (count($data['paths']) === 0) {
                 throw new \InvalidArgumentException(sprintf('Resource "%s" does not exist.', $resource));
             }
             $this->dump($data, $resource, $input, $output);
@@ -90,10 +90,8 @@ class SwaggerDumpCommand extends ContainerAwareCommand
         }
 
         $this->dump($data, null, $input, $output, false);
-
-        foreach ($data['apis'] as $api) {
-
-            $resource = substr($api['path'], 1);
+        foreach ($data['paths'] as $path => $pathData) {
+            $resource = substr($path, 1);
             if (!$input->getArgument('destination')) {
                 $output->writeln('');
                 $output->writeln(sprintf('<comment>API declaration for <info>"%s"</info> resource: </comment>', $resource));
@@ -106,8 +104,7 @@ class SwaggerDumpCommand extends ContainerAwareCommand
     protected function dump(array $data, $resource, InputInterface $input, OutputInterface $output, $treatAsFile = true)
     {
         $destination = $input->getArgument('destination');
-
-        $content = json_encode($data, $input->getOption('pretty') ? JSON_PRETTY_PRINT : 0);
+        $content = json_encode($data, ($input->getOption('pretty') ? JSON_PRETTY_PRINT : 0) | JSON_UNESCAPED_SLASHES);
 
         if (!$destination) {
             $output->writeln($content);

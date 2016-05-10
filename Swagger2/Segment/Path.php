@@ -8,7 +8,6 @@ use Nelmio\ApiDocBundle\Swagger2\Segment\Parameter\AbstractParameter;
 class Path implements SegmentInterface
 {
     protected $url;
-
     protected $parameters = array(
         'path' => array(),
         'query' => array(),
@@ -65,9 +64,19 @@ class Path implements SegmentInterface
         return $data;
     }
 
+    public function addResponse(Response $response)
+    {
+        $this->responses[] = $response;
+        return $this;
+    }
+
     private function getResponses()
     {
-        return array();
+        $responses = array();
+        foreach($this->responses as $response){
+            $responses[$response->getHttpCode()] = $response->toArray();
+        }
+        return $responses;
     }
 
     public function toArray()
@@ -75,8 +84,18 @@ class Path implements SegmentInterface
         $data = array(
             "description" => $this->description,
             "responses" => $this->getResponses(),
+            "consumes" => array("application/json"),
+            "produces" => array("application/json"),
         );
-
+        $pathParams = array();
+        foreach($this->parameters as $typeParam){
+            foreach ($typeParam as $p){
+                $pathParams[] = $p->toArray();
+            }
+        }
+        if(count($pathParams) > 0){
+            $data['parameters'] = $pathParams;
+        }
         return $data;
     }
 }

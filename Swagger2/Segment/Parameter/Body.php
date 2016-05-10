@@ -36,9 +36,10 @@ class Body extends AbstractParameter
         return array(
             "name" => $this->name,
             "required" => true,
-            "type" => $this->isCollection ? "array" : "object",
+            //"type" => $this->isCollection ? "array" : "object",
+            "in" => $this->in,
             "schema" => array(
-                "\$ref" => $this->schema->getName(),
+                "\$ref" => '#/definitions/'.$this->schema->getName(),
             )
         );
     }

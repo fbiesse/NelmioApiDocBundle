@@ -16,12 +16,12 @@ class ExpandedDefinition implements SegmentInterface
      * @var array
      */
     private $info;
-    
+
     /**
      * @var array
      */
     private $schemes;
-    
+
     /**
      * @var array
      */
@@ -35,28 +35,36 @@ class ExpandedDefinition implements SegmentInterface
     /**
      * @var array
      */
-    private $paths = array();
+    private $paths   = array();
+    private $schemas = array();
 
-    public function __construct($basePath, array $info, array $schemes, array $consumes, array $produces)
+    public function __construct($basePath, array $info, array $schemes)
     {
         $this->basePath = $basePath;
-        $this->info = $info;
-        $this->schemes = $schemes;
-        $this->consumes = $consumes;
-        $this->produces = $produces;
+        $this->info     = $info;
+        $this->schemes  = $schemes;
+        $this->schemas  = array();
+    }
+
+    /**
+     * @param array $schemas
+     * @return ExpandedDefinition
+     */
+    public function setSchemas(array $schemas)
+    {
+        $this->schemas = $schemas;
+        return $this;
     }
 
     public function toArray()
     {
         return array(
-            'swagger' => '2.0',
-            'info' => $this->getInfo(),
-            'host' => $this->getHost(),
-            'basePath' => $this->getBasePath(),
-            'schemes' => $this->getSchemes(),
-            'consumes' => $this->getConsumes(),
-            'produces' => $this->getProduces(),
-            'paths' => $this->getPaths(),
+            'swagger'     => '2.0',
+            'info'        => $this->getInfo(),
+            'host'        => $this->getHost(),
+            'basePath'    => $this->getBasePath(),
+            'schemes'     => $this->getSchemes(),
+            'paths'       => $this->getPaths(),
             'definitions' => $this->getDefinitions(),
         );
     }
@@ -66,16 +74,6 @@ class ExpandedDefinition implements SegmentInterface
         return count($this->schemes) ? array_unique($this->schemes) : array('http');
     }
 
-    public function getConsumes()
-    {
-        return count($this->consumes) ? array_unique($this->consumes) : array('application/json');
-    }
-
-    public function getProduces()
-    {
-        return count($this->produces) ? array_unique($this->produces) : array('application/json');
-    }
-
     public function getInfo()
     {
         return $this->info;
@@ -83,7 +81,7 @@ class ExpandedDefinition implements SegmentInterface
 
     public function getHost()
     {
-        return '';
+        return 'CHAMGEME';
     }
 
     public function getBasePath()
@@ -105,7 +103,7 @@ class ExpandedDefinition implements SegmentInterface
         $pathsArray = array();
 
         foreach ($this->paths as $url => $paths) {
-            $data = array();
+            $data       = array();
             $parameters = array();
             foreach ($paths as $path) {
                 $data = array_fill_keys($path->getMethods(), $path->toArray());
@@ -133,7 +131,11 @@ class ExpandedDefinition implements SegmentInterface
 
     private function getDefinitions()
     {
-        return array();
+        $schemas = array();
+        foreach ($this->schemas as $schemaItem) {
+            $schemas[$schemaItem->getName()] = $schemaItem->toArray();
+        }
+        return $schemas;
     }
 
     public function toJson($options = null)

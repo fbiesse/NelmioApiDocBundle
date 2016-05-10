@@ -2,6 +2,7 @@
 
 namespace Nelmio\ApiDocBundle\Swagger2;
 
+use Nelmio\ApiDocBundle\DataTypes;
 use Nelmio\ApiDocBundle\Swagger2\Segment\Schema;
 
 class SchemaRegistry
@@ -11,55 +12,60 @@ class SchemaRegistry
      */
     protected $schemas = array();
 
+    public function getSchemas(){
+        return $this->schemas;
+
+    }
+
     public function register($className, array $parameters)
     {
-        $name = $this->createName($className);
-
-        if (isset($this->schemas[$name])) {
-            return $this->schemas[$name];
+        $transformedName = $this->createName($className);
+        if (isset($this->schemas[$transformedName])) {
+            return $this->schemas[$transformedName];
         }
 
         $schemaProperties = array();
 
         if (is_array($parameters)) {
-            foreach ($parameters as $name => $parameter)
-            {
+            foreach ($parameters as $name => $parameter) {
+
                 if (!isset($parameters['type'])) {
-                    continue;
+                    //$parameters['type'] = 'object';
+                    //continue;
                 }
-                var_dump($name);
-                var_dump($parameter);
-                $property = new Segment\Parameter\SchemaProperty($name);
+                $property           = new Segment\Parameter\SchemaProperty($name);
                 $schemaProperties[] = $property;
 
                 switch ($parameter['actualType']) {
-                case DataTypes::MODEL:
-                    if (isset($parameter['children'])) {
-                        $property->setSchema(
-                            $this->register(
-                                $parameter['subType'],
-                                isset($parameter['children']) ? $parameter['children'] : null
-                            )
-                        );
-                    }
-                    break;
-                case DataTypes::COLLECTION:
-                    if (isset($parameter['children'])) {
-                        $property->setSchema(
-                            $this->register(
-                                $parameter['subType'],
-                                isset($parameter['children']) ? $parameter['children'] : null
-                            )
-                        );
-                    }
-                    $property->setCollection(true);
-                    break;
+                    case DataTypes::MODEL:
+                        if (isset($parameter['children'])) {
+                            $property->setSchema(
+                                $this->register(
+                                    $parameter['subType'],
+                                    isset($parameter['children']) ? $parameter['children'] : null
+                                )
+                            );
+                        }
+                        break;
+                    case DataTypes::COLLECTION:
+                        if (isset($parameter['children'])) {
+                            $property->setSchema(
+                                $this->register(
+                                    $parameter['subType'],
+                                    isset($parameter['children']) ? $parameter['children'] : null
+                                )
+                            );
+                        }
+                        $property->setCollection(true);
+                        break;
+                    default :
+                        $property->setType(TypeMap::type($parameter['actualType']));
+                        break;
                 }
             }
         }
-
-        $schema = new Schema($name, $schemaProperties);
-        $this->schemas[$name] = $schema;
+        $schema               = new Schema($transformedName, $schemaProperties);
+        $this->schemas[$transformedName] = $schema;
 
         return $schema;
     }

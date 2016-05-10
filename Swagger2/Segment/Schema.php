@@ -32,20 +32,63 @@ class Schema implements SegmentInterface
         foreach ($this->properties as $property) {
             if ($property->isRequired()) {
                 $required[] = $property;
-            } else {
-                $properties[] = $property;
             }
+            $propertyData = array();
+            if($property->isCollection()){
+                $itemData = array("type" => "string");
+                if($property->getSchema() !== null){
+                    $itemData = array("\$ref" => '#/definitions/'.$property->getSchema()->getName());
+                }
+                $propertyData =array(
+                    "type" => "array",
+                    "items" => $itemData
+                );
+            }else if($property->getSchema() !== null){
+                $propertyData =array(
+                    "\$ref" => '#/definitions/'.$property->getSchema()->getName()
+                );
+            }else{
+                $propertyData =array("type" => $property->getType());
+            }
+            $properties[$property->getName()] = $propertyData;
         }
 
         $requiredNames = array_map(function ($property) {
             return $property->getName();
         }, $required);
-
         $data = array(
-            'type' => 'object',
+            //'type' => ' object',
             'required' => $requiredNames,
+            'properties' => $properties
         );
-
         return $data;
     }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /*
+     $result = array();
+        $properties = array();
+
+        foreach ($this->properties as $property) {
+            $propertyData = array();
+            if($property->getSchema() !== null){
+                $propertyData =array(
+                    "\$ref" => '#/definitions/'.$property->getSchema()->getName(),
+                );
+            }else{
+                $propertyData =array("type" => $property->getType());
+            }
+            $properties[$property->getName()] = $propertyData;
+        }
+        return $properties;
+     */
+
+
 }

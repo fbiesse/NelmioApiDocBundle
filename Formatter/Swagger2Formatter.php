@@ -24,16 +24,6 @@ class Swagger2Formatter implements FormatterInterface
     /**
      * @var array
      */
-    protected $consumes = array();
-
-    /**
-     * @var array
-     */
-    protected $produces = array();
-
-    /**
-     * @var array
-     */
     protected $schemes = array();
 
     /**
@@ -62,11 +52,8 @@ class Swagger2Formatter implements FormatterInterface
         $definition = new ExpandedDefinition(
             $this->basePath,
             $this->info,
-            $this->schemes,
-            $this->consumes,
-            $this->produces
+            $this->schemes
         );
-
         $paths = array();
 
         foreach ($collection as $item) {
@@ -92,7 +79,9 @@ class Swagger2Formatter implements FormatterInterface
 
             $path = new Segment\Path($url);
 
-            $responses = array();
+            foreach($apiDoc->getParsedResponseMap() as $status => $responseData){
+                $path->addResponse(new Segment\Response($status, $responseData));
+            }
 
             foreach ($compiled->getPathVariables() as $paramValue) {
                 $parameter = new Segment\Parameter\Path($paramValue);
@@ -110,6 +99,7 @@ class Swagger2Formatter implements FormatterInterface
             $path->setDescription($apiDoc->getDescription());
 
             $data = $apiDoc->toArray();
+
 
             if (isset($data['filters'])) {
                 foreach ($data['filters'] as $name => $filter) {
@@ -130,6 +120,7 @@ class Swagger2Formatter implements FormatterInterface
                 }
             }
 
+
             if (isset($data['parameters'])) {
 
                 $identifier = $input['class'];
@@ -142,8 +133,8 @@ class Swagger2Formatter implements FormatterInterface
                         $path->addParameter($body);
                     }
                 } elseif ($this->inputIsOneDimensional($data['parameters'])) {
-                    foreach ($data["parameters"] as $paramDefinition) {
-                        $formParam = new Segment\Parameter\FormData($name);
+                    foreach ($data["parameters"] as $name => $paramDefinition) {
+                        $formParam = new Segment\Parameter\FormData($paramDefinition['name']);
                         $formParam->setType(TypeMap::type($paramDefinition['actualType']));
                         $path->addParameter($formParam);
                     }
@@ -151,7 +142,7 @@ class Swagger2Formatter implements FormatterInterface
             }
 
         }
-
+        $definition->setSchemas($this->schemaRegistry->getSchemas());
         return $definition->toArray();
 
     }

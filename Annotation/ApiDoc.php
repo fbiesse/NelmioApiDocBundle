@@ -642,6 +642,12 @@ class ApiDoc
         if ($host = $this->host) {
             $data['host'] = $host;
         }
+        if ($input = $this->input) {
+            $data['input'] = $input;
+        }
+        if ($output = $this->output) {
+            $data['output'] = $output;
+        }
 
         if ($description = $this->description) {
             $data['description'] = $description;
